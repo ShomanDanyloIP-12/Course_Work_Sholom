@@ -13,7 +13,6 @@ from os import walk, getcwd, path
 class Main:
 	def __init__(self):
 		pygame.init()
-		print("test")
 		script_directory = path.dirname(path.realpath(__file__))
 		print("Current working directory:", getcwd())
 		self.display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
