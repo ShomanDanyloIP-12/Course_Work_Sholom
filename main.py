@@ -13,6 +13,7 @@ from os import walk, getcwd, path
 class Main:
 	def __init__(self):
 		pygame.init()
+		print("test")
 		script_directory = path.dirname(path.realpath(__file__))
 		print("Current working directory:", getcwd())
 		self.display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -53,7 +54,7 @@ class Main:
 
 		# player
 		self.player_graphics = {folder: import_folder(path.join(script_directory, 'graphics', 'player', f'{folder}')) for folder in list(walk(path.join(script_directory, 'graphics', 'player')))[0][1]}
-		
+
 		# clouds
 		self.clouds = import_folder(path.join(script_directory, 'graphics', 'clouds'))
 
