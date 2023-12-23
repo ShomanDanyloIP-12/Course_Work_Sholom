@@ -231,7 +231,7 @@ class Player(Generic):
 
 		# sound
 		self.jump_sound = jump_sound
-		self.jump_sound.set_volume(0.2)
+		self.jump_sound.set_volume(0.1)
 
 	def damage(self):
 		if not self.invul_timer.active:

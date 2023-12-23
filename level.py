@@ -37,14 +37,14 @@ class Level:
 
 		# sounds 
 		self.bg_music = audio['music']
-		self.bg_music.set_volume(0.4)
+		self.bg_music.set_volume(0.1)
 		self.bg_music.play(loops = -1)
 
 		self.coin_sound = audio['coin']
-		self.coin_sound.set_volume(0.3)
+		self.coin_sound.set_volume(0.1)
 
 		self.hit_sound = audio['hit']
-		self.hit_sound.set_volume(0.3)
+		self.hit_sound.set_volume(0.1)
 
 	def build_level(self, grid, asset_dict, jump_sound):
 		for layer_name, layer in grid.items():
