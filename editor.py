@@ -21,6 +21,7 @@ class Editor:
 		self.display_surface = pygame.display.get_surface()
 		self.canvas_data = {}
 		self.switch = switch
+		self.switch_locker = True
 
 		# imports 
 		self.land_tiles = land_tiles
@@ -215,7 +216,9 @@ class Editor:
 			if event.type == pygame.QUIT:
 				pygame.quit()
 				sys.exit()
-			if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+
+			if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and self.switch_locker == True:
+				self.switch_locker = False
 				self.switch(self.create_grid())
 				self.editor_music.stop()
 			

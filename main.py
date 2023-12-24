@@ -7,6 +7,7 @@ from pygame.image import load
 
 from editor import Editor
 from level import Level
+from timer import Timer
 
 from os import walk, getcwd, path
 
@@ -18,8 +19,18 @@ class Main:
 		self.display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 		self.clock = pygame.time.Clock()
 		self.imports()
+		self.wait = Timer(400)
 
+		# # game attributes
+		# self.max_health = 100
+		# self.cur_health = 100
+		# self.coins = 0
+		# self.diamonds = 0
+		#
+		# # ui
+		# self.ui = UI()
 		self.editor_active = True
+		self.level_active = False
 		self.transition = Transition(self.toggle)
 		self.editor = Editor(self.land_tiles, self.switch)
 
@@ -27,6 +38,7 @@ class Main:
 		surf = load(path.join(script_directory, 'graphics', 'cursors', 'mouse.png')).convert_alpha()
 		cursor = pygame.cursors.Cursor((0,0), surf)
 		pygame.mouse.set_cursor(cursor)
+
 
 
 	def imports(self):
@@ -68,13 +80,15 @@ class Main:
 		self.editor_active = not self.editor_active
 		if self.editor_active:
 			self.editor.editor_music.play()
+			self.editor.switch_locker = True
+		self.wait.activate()
 
 	def switch(self, grid = None):
 		self.transition.active = True
 		if grid:
 			self.level = Level(
-				grid, 
-				self.switch,{
+				grid,
+				self.switch, {
 					'land': self.land_tiles,
 					'water bottom': self.water_bottom,
 					'water top': self.water_top_animation,
@@ -99,6 +113,7 @@ class Main:
 				self.editor.run(dt)
 			else:
 				self.level.run(dt)
+
 			self.transition.display(dt)
 			pygame.display.update()
 
@@ -108,6 +123,7 @@ class Transition:
 		self.display_surface = pygame.display.get_surface()
 		self.toggle = toggle
 		self.active = False
+
 
 		self.border_width = 0
 		self.direction = 1
@@ -120,13 +136,15 @@ class Transition:
 			self.border_width += 1000 * dt * self.direction
 			if self.border_width >= self.threshold:
 				self.direction = -1
+				self.border_width += -10
 				self.toggle()
-			
+
 			if self.border_width < 0:
 				self.active = False
 				self.border_width = 0
 				self.direction = 1
 			pygame.draw.circle(self.display_surface, 'black',self.center, self.radius, int(self.border_width))
+
 
 if __name__ == '__main__':
 	main = Main()

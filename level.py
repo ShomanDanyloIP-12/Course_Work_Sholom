@@ -1,6 +1,5 @@
 import pygame, sys 
 from pygame.math import Vector2 as vector
-
 from settings import *
 from support import *
 
@@ -12,6 +11,7 @@ class Level:
 	def __init__(self, grid, switch, asset_dict, audio):
 		self.display_surface = pygame.display.get_surface()
 		self.switch = switch
+		self.switch_locker = True
 
 		# groups 
 		self.all_sprites = CameraGroup()
@@ -127,7 +127,8 @@ class Level:
 			if event.type == pygame.QUIT:
 				pygame.quit()
 				sys.exit()
-			if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+			if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE and self.switch_locker == True:
+				self.switch_locker = False
 				self.switch()
 				self.bg_music.stop()
 
