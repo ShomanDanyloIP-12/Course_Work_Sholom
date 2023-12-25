@@ -150,7 +150,7 @@ class Shell(Generic):
 		self.pearl_surf = pearl_surf
 		self.has_shot = False
 		self.attack_cooldown = Timer(6000)
-		self.all_sprites = group[2]
+		self.all_sprites = group[0]
 		self.damage_sprites = damage_sprites
 
 	def animate(self, dt):
@@ -227,7 +227,7 @@ class Player(Generic):
 		self.hitbox = self.rect.inflate(-50,0)
 
 		# timer 
-		self.invul_timer = Timer(200)
+		self.invul_timer = Timer(500)
 
 		# sound
 		self.jump_sound = jump_sound

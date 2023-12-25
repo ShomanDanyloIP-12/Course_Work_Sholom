@@ -5,6 +5,7 @@ from support import *
 
 from pygame.image import load
 
+from ui import UI
 from editor import Editor
 from level import Level
 from timer import Timer
@@ -21,14 +22,15 @@ class Main:
 		self.imports()
 		self.wait = Timer(400)
 
-		# # game attributes
-		# self.max_health = 100
-		# self.cur_health = 100
-		# self.coins = 0
-		# self.diamonds = 0
-		#
-		# # ui
-		# self.ui = UI()
+		# game attributes
+		self.max_health = 100
+		self.cur_health = 100
+		self.coins = 0
+		self.diamonds = 0
+
+		# ui
+		self.ui = UI(self.display_surface)
+
 		self.editor_active = True
 		self.level_active = False
 		self.transition = Transition(self.toggle)
@@ -76,10 +78,19 @@ class Main:
 			'jump': pygame.mixer.Sound(path.join(script_directory, 'audio', 'jump.wav')),
 			'music': pygame.mixer.Sound(path.join(script_directory, 'audio', 'SuperHero.ogg')),
 		}
+
+	def change_coins(self, amount):
+		self.coins += amount
+
+	def change_health(self, amount):
+		self.cur_health -= amount
+
 	def toggle(self):
 		self.editor_active = not self.editor_active
 		if self.editor_active:
 			self.editor.editor_music.play()
+			self.coins = 0
+			self.cur_health = 100
 			self.editor.switch_locker = True
 		self.wait.activate()
 
@@ -103,7 +114,9 @@ class Main:
 					'player': self.player_graphics,
 					'pearl': self.pearl,
 					'clouds': self.clouds},
-				self.level_sounds)
+				self.level_sounds,
+				self.change_coins,
+				self.change_health)
 
 	def run(self):
 		while True:
@@ -113,6 +126,8 @@ class Main:
 				self.editor.run(dt)
 			else:
 				self.level.run(dt)
+				self.ui.show_health(self.cur_health, self.max_health)
+				self.ui.show_coins(self.coins)
 
 			self.transition.display(dt)
 			pygame.display.update()

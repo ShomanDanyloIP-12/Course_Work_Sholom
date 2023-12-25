@@ -9,7 +9,7 @@ from random import choice, randint
 
 
 class Level:
-	def __init__(self, grid, switch, asset_dict, audio):
+	def __init__(self, grid, switch, asset_dict, audio, change_coins, change_health):
 		self.display_surface = pygame.display.get_surface()
 		self.switch = switch
 		self.switch_locker = True
@@ -23,6 +23,10 @@ class Level:
 		self.shell_sprites = pygame.sprite.Group()
 
 		self.build_level(grid, asset_dict, audio['jump'])
+
+		# ui
+		self.change_coins = change_coins
+		self.change_health = change_health
 
 		# level limits
 		self.level_limits = {
@@ -78,7 +82,7 @@ class Level:
 							orientation = 'left', 
 							assets = asset_dict['shell'], 
 							pos =  pos, 
-							group =  [self.collision_sprites, self.shell_sprites, self.all_sprites],
+							group =  [self.all_sprites, self.collision_sprites, self.shell_sprites],
 							pearl_surf = asset_dict['pearl'],
 							damage_sprites = self.damage_sprites
 							)
@@ -87,7 +91,7 @@ class Level:
 							orientation = 'right',
 							assets = asset_dict['shell'],
 							pos =  pos,
-							group =  [self.collision_sprites, self.shell_sprites, self.all_sprites],
+							group =  [self.all_sprites, self.collision_sprites, self.shell_sprites],
 							pearl_surf = asset_dict['pearl'],
 							damage_sprites = self.damage_sprites
 							)
@@ -118,12 +122,17 @@ class Level:
 		for sprite in collided_coins:
 			self.coin_sound.play()
 			Particle(self.particle_surfs, sprite.rect.center, self.all_sprites)
+			if sprite.coin_type == "gold":
+				self.change_coins(50)
+			elif sprite.coin_type == "silver":
+				self.change_coins(10)
 
 	def get_damage(self):
 		collision_sprites = pygame.sprite.spritecollide(self.player, self.damage_sprites, False, pygame.sprite.collide_mask)
-		if collision_sprites:
+		if collision_sprites and not self.player.invul_timer.active:
 			self.hit_sound.play()
 			self.player.damage()
+			self.change_health(20)
 
 	def event_loop(self):
 		for event in pygame.event.get():

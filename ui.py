@@ -1,7 +1,9 @@
 import pygame
+from os import path
 
 class UI:
     def __init__(self, surface):
+        script_directory = path.dirname(path.realpath(__file__))
         # setup
         self.display_surface = surface
 
