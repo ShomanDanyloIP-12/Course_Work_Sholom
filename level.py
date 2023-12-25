@@ -7,11 +7,13 @@ from sprites import Generic, Block, Animated, Particle, Coin, Player, Spikes, To
 
 from random import choice, randint
 
+
 class Level:
 	def __init__(self, grid, switch, asset_dict, audio):
 		self.display_surface = pygame.display.get_surface()
 		self.switch = switch
 		self.switch_locker = True
+
 
 		# groups 
 		self.all_sprites = CameraGroup()
@@ -76,17 +78,19 @@ class Level:
 							orientation = 'left', 
 							assets = asset_dict['shell'], 
 							pos =  pos, 
-							group =  [self.all_sprites, self.collision_sprites, self.shell_sprites],
+							group =  [self.collision_sprites, self.shell_sprites, self.all_sprites],
 							pearl_surf = asset_dict['pearl'],
-							damage_sprites = self.damage_sprites)
-					case 10: 
+							damage_sprites = self.damage_sprites
+							)
+					case 10:
 						Shell(
-							orientation = 'right', 
-							assets = asset_dict['shell'], 
-							pos =  pos, 
-							group =  [self.all_sprites, self.collision_sprites, self.shell_sprites],
+							orientation = 'right',
+							assets = asset_dict['shell'],
+							pos =  pos,
+							group =  [self.collision_sprites, self.shell_sprites, self.all_sprites],
 							pearl_surf = asset_dict['pearl'],
-							damage_sprites = self.damage_sprites)
+							damage_sprites = self.damage_sprites
+							)
 
 					# palm trees
 					case 11: 
@@ -106,7 +110,6 @@ class Level:
 					case 16: Animated(asset_dict['palms']['large_bg'], pos, self.all_sprites, LEVEL_LAYERS['bg'])
 					case 17: Animated(asset_dict['palms']['left_bg'], pos, self.all_sprites, LEVEL_LAYERS['bg'])
 					case 18: Animated(asset_dict['palms']['right_bg'], pos, self.all_sprites, LEVEL_LAYERS['bg'])
-
 		for sprite in self.shell_sprites:
 			sprite.player = self.player
 

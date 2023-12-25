@@ -149,8 +149,9 @@ class Shell(Generic):
 		# pearl 
 		self.pearl_surf = pearl_surf
 		self.has_shot = False
-		self.attack_cooldown = Timer(2000)
-		self.damage_sprites = damage_sprites 
+		self.attack_cooldown = Timer(6000)
+		self.all_sprites = group[2]
+		self.damage_sprites = damage_sprites
 
 	def animate(self, dt):
 		current_animation = self.animation_frames[self.status]
@@ -165,7 +166,7 @@ class Shell(Generic):
 		if int(self.frame_index) == 2 and self.status == 'attack' and not self.has_shot:
 			pearl_direction = vector(-1,0) if self.orientation == 'left' else vector(1,0)
 			offset = (pearl_direction * 50) + vector(0,-10) if self.orientation == 'left' else (pearl_direction * 20) + vector(0,-10)
-			Pearl(self.rect.center + offset, pearl_direction, self.pearl_surf, [self.groups()[0], self.damage_sprites])
+			Pearl(self.rect.center + offset, pearl_direction, self.pearl_surf, [self.all_sprites, self.damage_sprites])
 			self.has_shot = True
 
 	def get_status(self):
@@ -183,22 +184,21 @@ class Pearl(Generic):
 	def __init__(self, pos, direction, surf, group):
 		super().__init__(pos, surf, group)
 		self.mask = pygame.mask.from_surface(self.image)
-
-		# movement 
+		# movement
 		self.pos = vector(self.rect.topleft)
 		self.direction = direction
 		self.speed = 150
 
-		# self destruct 
+		# self destruct
 		self.timer = Timer(6000)
 		self.timer.activate()
 
 	def update(self, dt):
-		# movement 
+		# movement
 		self.pos.x += self.direction.x * self.speed * dt
 		self.rect.x = round(self.pos.x)
-
-		# timer 
+		# print(self.pos.x)
+		# timer
 		self.timer.update()
 		if not self.timer.active:
 			self.kill()
