@@ -3,6 +3,7 @@ from pygame.math import Vector2 as vector
 from settings import *
 from support import *
 from pygame.mouse import get_pos as mouse_pos
+from pygame.image import load
 
 from sprites import Generic, Block, Animated, Particle, Coin, Player, Spikes, Tooth, Shell, Cloud
 
@@ -269,6 +270,8 @@ class Buttons:
 		mm_margin = 6
 		mm_topleft = (WINDOW_WIDTH - mm_size - mm_margin, mm_margin)
 		self.mm_rect = pygame.Rect(mm_topleft, (mm_size, mm_size))
+		self.image = load(path.join(script_directory, 'graphics', 'menus', 'main_menu_button.png')).convert_alpha()
+		self.image = pygame.transform.scale(self.image, (mm_size, mm_size))
 
 	def click(self, mouse_pos, mouse_button):
 		if self.mm_rect.collidepoint(mouse_pos):
@@ -276,4 +279,4 @@ class Buttons:
 				return print("Button")
 
 	def display(self):
-		pygame.draw.rect(self.display_surface, 'red', self.mm_rect)
+		self.display_surface.blit(self.image, self.mm_rect.topleft)

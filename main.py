@@ -39,9 +39,9 @@ class Main:
 		self.ui = UI(self.display_surface)
 
 		self.replacement = {}
-		self.editor_active = True
+		self.editor_active = False
 		self.level_active = False
-		self.main_menu_active = False
+		self.main_menu_active = True
 		self.level_menu_active = False
 		self.save_menu_active = False
 		self.transition = Transition(self.toggle)
@@ -105,8 +105,8 @@ class Main:
 	def death(self):
 		if self.cur_health <= 0:
 			self.player_dead = True
-			self.level.switch_locker = False
-			self.level.switch({'from': 'editor', 'to': 'level'})
+			self.switch_locker = False
+			self.switch({'from': 'level', 'to': 'main_menu'})
 			self.level.bg_music.stop()
 
 	def player_dead_get(self):

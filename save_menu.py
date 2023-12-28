@@ -1,5 +1,6 @@
 import pygame, sys
 from pygame.mouse import get_pos as mouse_pos
+from pygame.image import load
 
 from settings import *
 from support import *
@@ -7,6 +8,8 @@ from support import *
 class Save_menu:
     def __init__(self, switch):
         self.display_surface = pygame.display.get_surface()
+        self.image_background = load(path.join(script_directory, 'graphics', 'menus', 'save_menu', 'background.png')).convert_alpha()
+        self.image_background = pygame.transform.scale(self.image_background, (1280, 720))
         self.switch = switch
         self.buttons = Buttons()
         self.switch_locker = True
@@ -20,7 +23,7 @@ class Save_menu:
 
     def run(self, dt):
         self.event_loop()
-        self.display_surface.fill(SKY_COLOR)
+        self.display_surface.blit(self.image_background, (0, 0))
         self.buttons.display()
 
     def menu_click(self, event):
@@ -38,11 +41,14 @@ class Buttons:
 
 
     def create_buttons(self):
+        self.display_surface = pygame.display.get_surface()
         # back to main menu
         mm_size = 45
         mm_margin = 6
         mm_topleft = (WINDOW_WIDTH - mm_size - mm_margin, mm_margin)
         self.mm_rect = pygame.Rect(mm_topleft, (mm_size, mm_size))
+        self.image = load(path.join(script_directory, 'graphics', 'menus', 'main_menu_button.png')).convert_alpha()
+        self.image = pygame.transform.scale(self.image, (mm_size, mm_size))
 
         # button areas
         width = 300
@@ -51,16 +57,26 @@ class Buttons:
         self.level2_save_button_rect = pygame.Rect((width + 190, 135), (width, height))
         self.level3_save_button_rect = pygame.Rect((width * 2 + 230, 135), (width, height))
 
-        self.level4_save_button_rect = pygame.Rect((250, height + 175), (width, height))
+        self.level4_save_button_rect = pygame.Rect((150, height + 175), (width, height))
         self.level5_save_button_rect = pygame.Rect((width + 190, height + 175), (width, height))
         self.level6_save_button_rect = pygame.Rect((width * 2 + 230, height + 175), (width, height))
 
+        self.image_save_button = load(path.join(script_directory, 'graphics', 'menus', 'save_menu', 'save_button.png')).convert_alpha()
+        self.image_save_button = pygame.transform.scale(self.image_save_button, (300, 200))
+
 
     def display(self):
-        pygame.draw.rect(self.display_surface, 'red', self.mm_rect)
-        pygame.draw.rect(self.display_surface, 'red', self.level1_save_button_rect)
-        pygame.draw.rect(self.display_surface, 'red', self.level2_save_button_rect)
-        pygame.draw.rect(self.display_surface, 'red', self.level3_save_button_rect)
-        pygame.draw.rect(self.display_surface, 'red', self.level4_save_button_rect)
-        pygame.draw.rect(self.display_surface, 'red', self.level5_save_button_rect)
-        pygame.draw.rect(self.display_surface, 'red', self.level6_save_button_rect)
+        self.display_surface.blit(self.image, self.mm_rect.topleft)
+        self.display_surface.blit(self.image_save_button, self.level1_save_button_rect.topleft)
+        self.display_surface.blit(self.image_save_button, self.level2_save_button_rect.topleft)
+        self.display_surface.blit(self.image_save_button, self.level3_save_button_rect.topleft)
+        self.display_surface.blit(self.image_save_button, self.level4_save_button_rect.topleft)
+        self.display_surface.blit(self.image_save_button, self.level5_save_button_rect.topleft)
+        self.display_surface.blit(self.image_save_button, self.level6_save_button_rect.topleft)
+
+        # pygame.draw.rect(self.display_surface, 'red', self.level1_save_button_rect)
+        # pygame.draw.rect(self.display_surface, 'red', self.level2_save_button_rect)
+        # pygame.draw.rect(self.display_surface, 'red', self.level3_save_button_rect)
+        # pygame.draw.rect(self.display_surface, 'red', self.level4_save_button_rect)
+        # pygame.draw.rect(self.display_surface, 'red', self.level5_save_button_rect)
+        # pygame.draw.rect(self.display_surface, 'red', self.level6_save_button_rect)

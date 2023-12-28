@@ -271,6 +271,7 @@ class Player(Generic):
 	def animate(self, dt):
 		if self.status == 'dead':
 			current_animation = self.animation_frames[f'{self.status}_{self.orientation}']
+			self.speed = 0
 			self.frame_index += ANIMATION_SPEED * dt
 			self.frame_index = 3 if self.frame_index >= len(current_animation) else self.frame_index
 			self.image = current_animation[int(self.frame_index)]

@@ -23,6 +23,8 @@ class Menu:
 		mm_margin = 6
 		mm_topleft = (WINDOW_WIDTH - mm_size - mm_margin, mm_margin)
 		self.mm_rect = pygame.Rect(mm_topleft, (mm_size, mm_size))
+		self.image = load(path.join(script_directory, 'graphics', 'menus', 'main_menu_button.png')).convert_alpha()
+		self.image = pygame.transform.scale(self.image, (mm_size, mm_size))
 
 		# menu area
 		size = 180
@@ -71,7 +73,7 @@ class Menu:
 	def display(self, index):
 		self.buttons.update()
 		self.buttons.draw(self.display_surface)
-		pygame.draw.rect(self.display_surface, 'red', self.mm_rect)
+		self.display_surface.blit(self.image, self.mm_rect.topleft)
 		self.highlight_indicator(index)
 
 class Button(pygame.sprite.Sprite):
