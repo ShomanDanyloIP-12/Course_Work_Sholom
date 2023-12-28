@@ -2,6 +2,7 @@ import pygame, sys
 from pygame.math import Vector2 as vector
 from settings import *
 from support import *
+from pygame.mouse import get_pos as mouse_pos
 
 from sprites import Generic, Block, Animated, Particle, Coin, Player, Spikes, Tooth, Shell, Cloud
 
@@ -9,10 +10,11 @@ from random import choice, randint
 
 
 class Level:
-	def __init__(self, grid, switch, asset_dict, audio, change_coins, change_health):
+	def __init__(self, grid, switch, asset_dict, audio, change_coins, change_health, player_dead):
 		self.display_surface = pygame.display.get_surface()
 		self.switch = switch
 		self.switch_locker = True
+		self.player_dead = player_dead
 
 
 		# groups 
@@ -21,18 +23,23 @@ class Level:
 		self.damage_sprites = pygame.sprite.Group()
 		self.collision_sprites = pygame.sprite.Group()
 		self.shell_sprites = pygame.sprite.Group()
+		self.mortal_enemy_collisions = pygame.sprite.Group()
 
 		self.build_level(grid, asset_dict, audio['jump'])
 
 		# ui
 		self.change_coins = change_coins
 		self.change_health = change_health
+		self.buttons = Buttons()
 
 		# level limits
 		self.level_limits = {
 		'left': -WINDOW_WIDTH,
 		'right': sorted(list(grid['terrain'].keys()), key = lambda pos: pos[0])[-1][0] + 500
 		}
+
+		# red_line
+		self.red_line = sorted(list(grid['terrain'].keys()), key=lambda pos: pos[1])[-1][1] + 100
 
 		# additional stuff
 		self.particle_surfs = asset_dict['particle']
@@ -64,7 +71,7 @@ class Level:
 						Generic(pos, asset_dict['water bottom'], self.all_sprites, LEVEL_LAYERS['water'])
 
 				match data:
-					case 0: self.player = Player(pos, asset_dict['player'], self.all_sprites, self.collision_sprites, jump_sound)
+					case 0: self.player = Player(pos, asset_dict['player'], self.all_sprites, self.collision_sprites, jump_sound, self.player_dead)
 					case 1: 
 						self.horizon_y = pos[1]
 						self.all_sprites.horizon_y = pos[1]
@@ -76,7 +83,7 @@ class Level:
 					# enemies
 					case 7: Spikes(asset_dict['spikes'], pos, [self.all_sprites, self.damage_sprites])
 					case 8: 
-						Tooth(asset_dict['tooth'], pos, [self.all_sprites, self.damage_sprites], self.collision_sprites)
+						Tooth(asset_dict['tooth'], pos, [self.all_sprites, self.mortal_enemy_collisions], self.collision_sprites)
 					case 9: 
 						Shell(
 							orientation = 'left', 
@@ -117,6 +124,8 @@ class Level:
 		for sprite in self.shell_sprites:
 			sprite.player = self.player
 
+
+
 	def get_coins(self):
 		collided_coins = pygame.sprite.spritecollide(self.player, self.coin_sprites, True)
 		for sprite in collided_coins:
@@ -127,12 +136,41 @@ class Level:
 			elif sprite.coin_type == "silver":
 				self.change_coins(10)
 
+	def player_under_red_line(self):
+		if self.player.pos[1] >= self.red_line and not self.player.invul_timer.active and self.player.player_dead() == False:
+			self.hit_sound.play()
+			self.player.damage()
+			self.change_health(100)
+
+
 	def get_damage(self):
 		collision_sprites = pygame.sprite.spritecollide(self.player, self.damage_sprites, False, pygame.sprite.collide_mask)
-		if collision_sprites and not self.player.invul_timer.active:
+		if collision_sprites and not self.player.invul_timer.active and self.player.player_dead() == False:
 			self.hit_sound.play()
 			self.player.damage()
 			self.change_health(20)
+
+	def menu_click(self, event):
+		if event.type == pygame.MOUSEBUTTONDOWN and self.buttons.mm_rect.collidepoint(mouse_pos()) and self.switch_locker == True:
+			self.switch_locker = False
+			self.switch({'from':  'level', 'to': 'main_menu'})
+			self.bg_music.stop()
+
+	def mortal_enemy_collision(self):
+		mortal_collided = pygame.sprite.spritecollide(self.player, self.mortal_enemy_collisions, False, pygame.sprite.collide_mask)
+		if mortal_collided:
+			for enemy in mortal_collided:
+				enemy_center = enemy.rect.centery
+				enemy_top = enemy.rect.top
+				player_bottom = self.player.rect.bottom
+				if enemy_top < player_bottom < enemy_center and self.player.status == 'fall' :
+					self.player.direction.y -= 3.5
+					enemy.death_timer.activate()
+					enemy.dead = True
+				elif not enemy_top < player_bottom < enemy_center and not self.player.invul_timer.active:
+					self.hit_sound.play()
+					self.player.damage()
+					self.change_health(20)
 
 	def event_loop(self):
 		for event in pygame.event.get():
@@ -141,7 +179,7 @@ class Level:
 				sys.exit()
 			if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE and self.switch_locker == True:
 				self.switch_locker = False
-				self.switch()
+				self.switch({'from':  'level', 'to': 'editor'})
 				self.bg_music.stop()
 
 			if event.type == self.cloud_timer:
@@ -150,6 +188,8 @@ class Level:
 				x = self.level_limits['right'] + randint(100,300)
 				y = self.horizon_y - randint(-50,600)
 				Cloud((x,y), surf, self.all_sprites, self.level_limits['left'])
+
+			self.menu_click(event)
 
 	def startup_clouds(self):
 		for i in range(40):
@@ -165,10 +205,13 @@ class Level:
 		self.all_sprites.update(dt)
 		self.get_coins()
 		self.get_damage()
+		self.mortal_enemy_collision()
+		self.player_under_red_line()
 
 		# drawing
 		self.display_surface.fill(SKY_COLOR)
 		self.all_sprites.custom_draw(self.player)
+		self.buttons.display()
 
 class CameraGroup(pygame.sprite.Group):
 	def __init__(self):
@@ -213,3 +256,24 @@ class CameraGroup(pygame.sprite.Group):
 					offset_rect = sprite.rect.copy()
 					offset_rect.center -= self.offset
 					self.display_surface.blit(sprite.image, offset_rect)
+
+class Buttons:
+	def __init__(self):
+		self.display_surface = pygame.display.get_surface()
+		self.create_buttons()
+
+
+	def create_buttons(self):
+		# main_menu area
+		mm_size = 45
+		mm_margin = 6
+		mm_topleft = (WINDOW_WIDTH - mm_size - mm_margin, mm_margin)
+		self.mm_rect = pygame.Rect(mm_topleft, (mm_size, mm_size))
+
+	def click(self, mouse_pos, mouse_button):
+		if self.mm_rect.collidepoint(mouse_pos):
+			if mouse_button[0]:
+				return print("Button")
+
+	def display(self):
+		pygame.draw.rect(self.display_surface, 'red', self.mm_rect)

@@ -18,7 +18,12 @@ class Menu:
 					self.menu_surfs[value['menu']].append((key,load(value['menu_surf'])))
 
 	def create_buttons(self):
-		
+		# main_menu area
+		mm_size = 45
+		mm_margin = 6
+		mm_topleft = (WINDOW_WIDTH - mm_size - mm_margin, mm_margin)
+		self.mm_rect = pygame.Rect(mm_topleft, (mm_size, mm_size))
+
 		# menu area
 		size = 180
 		margin = 6
@@ -49,6 +54,9 @@ class Menu:
 				if mouse_button[2]: # right click
 					sprite.switch()
 				return sprite.get_id()
+		if self.mm_rect.collidepoint(mouse_pos):
+			if mouse_button[0]:
+				pass
 
 	def highlight_indicator(self, index):
 		if EDITOR_DATA[index]['menu'] == 'terrain':
@@ -63,6 +71,7 @@ class Menu:
 	def display(self, index):
 		self.buttons.update()
 		self.buttons.draw(self.display_surface)
+		pygame.draw.rect(self.display_surface, 'red', self.mm_rect)
 		self.highlight_indicator(index)
 
 class Button(pygame.sprite.Sprite):

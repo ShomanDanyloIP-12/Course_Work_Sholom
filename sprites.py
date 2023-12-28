@@ -1,5 +1,7 @@
 import pygame
 from pygame.math import Vector2 as vector
+from os import path
+from support import import_folder
 
 from settings import *
 from timer import Timer
@@ -86,6 +88,10 @@ class Tooth(Generic):
 		self.rect.bottom = self.rect.top + TILE_SIZE
 		self.mask = pygame.mask.from_surface(self.image)
 
+		# death
+		self.death_timer = Timer(100)
+		self.dead = False
+
 		# movement
 		self.direction = vector(choice((1,-1)),0)
 		self.orientation = 'left' if self.direction.x < 0 else 'right'
@@ -103,6 +109,17 @@ class Tooth(Generic):
 		self.frame_index = 0 if self.frame_index >= len(current_animation) else self.frame_index
 		self.image = current_animation[int(self.frame_index)]
 		self.mask = pygame.mask.from_surface(self.image)
+		if self.death_timer.active:
+			surf = self.mask.to_surface()
+			surf.set_colorkey('black')
+			self.image = surf
+
+	def death(self):
+		if self.dead == True:
+			self.speed = 0
+			if not self.death_timer.active:
+				self.kill()
+
 
 	def move(self, dt):
 		right_gap = self.rect.bottomright + vector(1,1)
@@ -132,6 +149,8 @@ class Tooth(Generic):
 	def update(self, dt):
 		self.animate(dt)
 		self.move(dt)
+		self.death_timer.update()
+		self.death()
 
 class Shell(Generic):
 	def __init__(self, orientation, assets, pos, group, pearl_surf, damage_sprites):
@@ -204,13 +223,14 @@ class Pearl(Generic):
 			self.kill()
 
 class Player(Generic):
-	def __init__(self, pos, assets, group, collision_sprites, jump_sound):
+	def __init__(self, pos, assets, group, collision_sprites, jump_sound, player_dead):
 		
 		# animation
 		self.animation_frames = assets
 		self.frame_index = 0
 		self.status = 'idle'
 		self.orientation = 'right'
+		self.player_dead = player_dead
 		surf = self.animation_frames[f'{self.status}_{self.orientation}'][self.frame_index]
 		super().__init__(pos, surf, group)
 		self.mask = pygame.mask.from_surface(self.image)
@@ -239,7 +259,9 @@ class Player(Generic):
 			self.direction.y -= 1.5
 
 	def get_status(self):
-		if self.direction.y < 0:
+		if self.player_dead() == True:
+			self.status = 'dead'
+		elif self.direction.y < 0:
 			self.status = 'jump'
 		elif self.direction.y > 1:
 			self.status = 'fall'
@@ -247,11 +269,18 @@ class Player(Generic):
 			self.status = 'run' if self.direction.x != 0 else 'idle'
 
 	def animate(self, dt):
-		current_animation = self.animation_frames[f'{self.status}_{self.orientation}']
-		self.frame_index += ANIMATION_SPEED * dt
-		self.frame_index = 0 if self.frame_index >= len(current_animation) else self.frame_index
-		self.image = current_animation[int(self.frame_index)]
-		self.mask = pygame.mask.from_surface(self.image)
+		if self.status == 'dead':
+			current_animation = self.animation_frames[f'{self.status}_{self.orientation}']
+			self.frame_index += ANIMATION_SPEED * dt
+			self.frame_index = 3 if self.frame_index >= len(current_animation) else self.frame_index
+			self.image = current_animation[int(self.frame_index)]
+			self.mask = pygame.mask.from_surface(self.image)
+		else:
+			current_animation = self.animation_frames[f'{self.status}_{self.orientation}']
+			self.frame_index += ANIMATION_SPEED * dt
+			self.frame_index = 0 if self.frame_index >= len(current_animation) else self.frame_index
+			self.image = current_animation[int(self.frame_index)]
+			self.mask = pygame.mask.from_surface(self.image)
 
 		if self.invul_timer.active:
 			surf = self.mask.to_surface()

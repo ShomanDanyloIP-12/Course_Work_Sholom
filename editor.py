@@ -15,13 +15,18 @@ from random import choice, randint
 from os import path
 
 class Editor:
-	def __init__(self, land_tiles, switch):
+	def __init__(self, land_tiles, switch, audio):
 		script_directory = path.dirname(path.realpath(__file__))
 		# main setup 
 		self.display_surface = pygame.display.get_surface()
 		self.canvas_data = {}
 		self.switch = switch
 		self.switch_locker = True
+
+		# music
+		self.editor_music = audio['music']
+		self.editor_music.set_volume(0.2)
+		self.editor_music.play(loops=-1)
 
 		# imports 
 		self.land_tiles = land_tiles
@@ -73,11 +78,6 @@ class Editor:
 			tile_id = 1,
 			origin = self.origin,
 			group = [self.canvas_objects, self.background])
-
-		# music
-		self.editor_music = pygame.mixer.Sound(path.join(script_directory, 'audio', 'Explorer.ogg'))
-		self.editor_music.set_volume(0.2)
-		self.editor_music.play(loops = -1)
 
 	# support
 	def get_current_cell(self, obj = None):
@@ -219,7 +219,7 @@ class Editor:
 
 			if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and self.switch_locker == True:
 				self.switch_locker = False
-				self.switch(self.create_grid())
+				self.switch({'from':  'editor', 'to': 'level'}, self.create_grid())
 				self.editor_music.stop()
 			
 			self.pan_input(event)
@@ -271,9 +271,13 @@ class Editor:
 		if event.type == pygame.MOUSEBUTTONDOWN and self.menu.rect.collidepoint(mouse_pos()):
 			new_index = self.menu.click(mouse_pos(), mouse_buttons())
 			self.selection_index = new_index if new_index else self.selection_index
+		if event.type == pygame.MOUSEBUTTONDOWN and self.menu.mm_rect.collidepoint(mouse_pos()) and self.switch_locker == True:
+			self.switch_locker = False
+			self.switch({'from':  'editor', 'to': 'main_menu'})
+			self.editor_music.stop()
 
 	def canvas_add(self):
-		if mouse_buttons()[0] and not self.menu.rect.collidepoint(mouse_pos()) and not self.object_drag_active:
+		if mouse_buttons()[0] and not self.menu.rect.collidepoint(mouse_pos()) and not self.menu.mm_rect.collidepoint(mouse_pos()) and not self.object_drag_active:
 			current_cell = self.get_current_cell()
 			if EDITOR_DATA[self.selection_index]['type'] == 'tile':
 
@@ -390,7 +394,7 @@ class Editor:
 
 	def preview(self):
 		selected_object = self.mouse_on_object()
-		if not self.menu.rect.collidepoint(mouse_pos()):
+		if not self.menu.rect.collidepoint(mouse_pos()) and not self.menu.mm_rect.collidepoint(mouse_pos()):
 			if selected_object:
 				rect = selected_object.rect.inflate(10,10)
 				color = 'black'
