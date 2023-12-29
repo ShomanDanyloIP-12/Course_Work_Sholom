@@ -1,6 +1,7 @@
 import pygame, sys
 from pygame.mouse import get_pos as mouse_pos
 from pygame.image import load
+import pickle
 
 from settings import *
 from support import *
@@ -26,12 +27,33 @@ class Level_menu:
         self.display_surface.blit(self.image_background, (0, 0))
         self.buttons.display()
 
+    def read_level(self, name):
+        file_path = path.join(script_directory, 'levels', f'{name}.json')
+        with open(file_path, 'rb') as file:
+            grid = pickle.load(file)
+        return grid
+
     def menu_click(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and self.buttons.mm_rect.collidepoint(
                 mouse_pos()) and self.switch_locker == True:
             self.switch_locker = False
             self.switch({'from': 'level_menu', 'to': 'main_menu'})
-            # self.bg_music.stop()
+        if event.type == pygame.MOUSEBUTTONDOWN and self.buttons.level1_button_rect.collidepoint(
+                mouse_pos()) and self.switch_locker == True:
+            self.switch_locker = False
+            self.switch({'from': 'level_menu', 'to': 'level'}, self.read_level('level1'))
+        elif event.type == pygame.MOUSEBUTTONDOWN and self.buttons.level2_button_rect.collidepoint(
+                mouse_pos()) and self.switch_locker == True:
+            self.switch_locker = False
+            self.switch({'from': 'level_menu', 'to': 'level'}, self.read_level('level2'))
+        elif event.type == pygame.MOUSEBUTTONDOWN and self.buttons.level3_button_rect.collidepoint(
+                mouse_pos()) and self.switch_locker == True:
+            self.switch_locker = False
+            self.switch({'from': 'level_menu', 'to': 'level'}, self.read_level('level3'))
+        elif event.type == pygame.MOUSEBUTTONDOWN and self.buttons.level4_button_rect.collidepoint(
+                mouse_pos()) and self.switch_locker == True:
+            self.switch_locker = False
+            self.switch({'from': 'level_menu', 'to': 'level'}, self.read_level('level4'))
 
 
 class Buttons:

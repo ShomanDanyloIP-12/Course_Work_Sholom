@@ -3,6 +3,7 @@ from pygame.math import Vector2 as vector
 from pygame.mouse import get_pressed as mouse_buttons
 from pygame.mouse import get_pos as mouse_pos
 from pygame.image import load
+import json
 
 from settings import *
 from support import *
@@ -15,7 +16,7 @@ from random import choice, randint
 from os import path
 
 class Editor:
-	def __init__(self, land_tiles, switch, audio):
+	def __init__(self, land_tiles, switch):
 		script_directory = path.dirname(path.realpath(__file__))
 		# main setup 
 		self.display_surface = pygame.display.get_surface()
@@ -23,10 +24,6 @@ class Editor:
 		self.switch = switch
 		self.switch_locker = True
 
-		# music
-		self.editor_music = audio['music']
-		self.editor_music.set_volume(0.2)
-		self.editor_music.play(loops=-1)
 
 		# imports 
 		self.land_tiles = land_tiles
@@ -210,6 +207,8 @@ class Editor:
 		return layers
 
 
+
+
 	# input
 	def event_loop(self):
 		for event in pygame.event.get():
@@ -217,10 +216,9 @@ class Editor:
 				pygame.quit()
 				sys.exit()
 
-			if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and self.switch_locker == True:
+			if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and self.switch_locker and len(self.create_grid()['terrain']) != 0:
 				self.switch_locker = False
 				self.switch({'from':  'editor', 'to': 'level'}, self.create_grid())
-				self.editor_music.stop()
 			
 			self.pan_input(event)
 			self.selection_hotkeys(event)
@@ -274,10 +272,13 @@ class Editor:
 		if event.type == pygame.MOUSEBUTTONDOWN and self.menu.mm_rect.collidepoint(mouse_pos()) and self.switch_locker == True:
 			self.switch_locker = False
 			self.switch({'from':  'editor', 'to': 'main_menu'})
-			self.editor_music.stop()
+		if event.type == pygame.MOUSEBUTTONDOWN and self.menu.sv_rect.collidepoint(mouse_pos()) and self.switch_locker and len(self.create_grid()['terrain']) != 0:
+			self.switch_locker = False
+			self.switch({'from':  'editor', 'to': 'save_menu'})
+
 
 	def canvas_add(self):
-		if mouse_buttons()[0] and not self.menu.rect.collidepoint(mouse_pos()) and not self.menu.mm_rect.collidepoint(mouse_pos()) and not self.object_drag_active:
+		if mouse_buttons()[0] and not self.menu.rect.collidepoint(mouse_pos()) and not self.menu.mm_rect.collidepoint(mouse_pos()) and not self.menu.sv_rect.collidepoint(mouse_pos()) and not self.object_drag_active:
 			current_cell = self.get_current_cell()
 			if EDITOR_DATA[self.selection_index]['type'] == 'tile':
 
@@ -394,7 +395,7 @@ class Editor:
 
 	def preview(self):
 		selected_object = self.mouse_on_object()
-		if not self.menu.rect.collidepoint(mouse_pos()) and not self.menu.mm_rect.collidepoint(mouse_pos()):
+		if not self.menu.rect.collidepoint(mouse_pos()) and not self.menu.mm_rect.collidepoint(mouse_pos()) and not self.menu.sv_rect.collidepoint(mouse_pos()):
 			if selected_object:
 				rect = selected_object.rect.inflate(10,10)
 				color = 'black'

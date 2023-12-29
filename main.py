@@ -2,6 +2,7 @@ import pygame
 from pygame.math import Vector2 as vector
 from settings import *
 from support import *
+import pickle
 
 from pygame.image import load
 
@@ -26,7 +27,7 @@ class Main:
 
 		self.main_menu = Main_menu(self.switch)
 		self.level_menu = Level_menu(self.switch)
-		self.save_menu = Save_menu(self.switch)
+		self.save_menu = Save_menu(self.switch, self.save_level)
 
 		# game attributes
 		self.max_health = 100
@@ -45,7 +46,14 @@ class Main:
 		self.level_menu_active = False
 		self.save_menu_active = False
 		self.transition = Transition(self.toggle)
-		self.editor = Editor(self.land_tiles, self.switch, self.editor_sounds)
+		self.editor = Editor(self.land_tiles, self.switch)
+
+		self.music = self.no_level_sounds['music']
+		self.music.set_volume(0.2)
+		self.music.play(loops=-1)
+
+
+
 
 		# cursor 
 		surf = load(path.join(script_directory, 'graphics', 'cursors', 'mouse.png')).convert_alpha()
@@ -83,7 +91,7 @@ class Main:
 		self.clouds = import_folder(path.join(script_directory, 'graphics', 'clouds'))
 
 		# editor_sounds
-		self.editor_sounds = {
+		self.no_level_sounds = {
 			'music': pygame.mixer.Sound(path.join(script_directory, 'audio', 'Explorer.ogg'))
 		}
 
@@ -96,11 +104,27 @@ class Main:
 		}
 
 
-	def change_coins(self, amount):
+	def change_coins(self, amount, nulify = None):
 		self.coins += amount
+		if nulify:
+			self.coins = 0
 
-	def change_health(self, amount):
+	def change_health(self, amount, nulify = None):
 		self.cur_health -= amount
+		if nulify:
+			self.cur_health = 100
+
+	def change_diamonds(self, amount, nulify = None):
+		self.diamonds += amount
+		if nulify:
+			self.diamonds = 0
+
+	def level_complete(self):
+		if self.diamonds == 3:
+			self.level.complete = True
+
+	def get_score(self):
+		return self.coins
 
 	def death(self):
 		if self.cur_health <= 0:
@@ -115,10 +139,17 @@ class Main:
 	def change_toggle(self, toggle_replacement):
 		self.replacement = toggle_replacement
 
+	def save_level(self, name):
+		file_path = path.join(script_directory, 'saved_levels', f'{name}.json')
+		with open(file_path, 'wb') as file:
+			pickle.dump(self.editor.create_grid(), file)
+
 	def toggle(self):
 		if self.replacement['from'] == 'editor':
 			self.editor_active = False
 		elif self.replacement['from'] == 'level':
+			self.level.bg_music.stop()
+			self.music.play(loops=-1)
 			self.level_active = False
 		elif self.replacement['from'] == 'main_menu':
 			self.main_menu_active = False
@@ -130,16 +161,18 @@ class Main:
 		if self.replacement['to'] == 'editor':
 			self.editor_active = True
 		elif self.replacement['to'] == 'level':
+			self.music.stop()
+			self.level.bg_music.play(loops=-1)
 			self.level_active = True
 		elif self.replacement['to'] == 'main_menu':
 			self.main_menu_active = True
 		elif self.replacement['to'] == 'level_menu':
 			self.level_menu_active = True
 		elif self.replacement['to'] == 'save_menu':
+			self.save_menu.from_where = self.replacement['from']
 			self.save_menu_active = True
 
 		if self.editor_active:
-			self.editor.editor_music.play()
 			self.editor.switch_locker = True
 		if self.level_active:
 			self.level.switch_locker = True
@@ -153,6 +186,7 @@ class Main:
 		if not self.level_active:
 			self.coins = 0
 			self.cur_health = 100
+			self.diamonds = 0
 			self.player_dead = False
 
 
@@ -181,7 +215,9 @@ class Main:
 				self.level_sounds,
 				self.change_coins,
 				self.change_health,
-				self.player_dead_get
+				self.player_dead_get,
+				self.change_diamonds,
+				self.get_score
 			)
 
 	def run(self):
@@ -194,6 +230,7 @@ class Main:
 				self.level.run(dt)
 				self.ui.show_health(self.cur_health, self.max_health)
 				self.ui.show_coins(self.coins)
+				self.level_complete()
 				self.death()
 			elif self.main_menu_active:
 				self.main_menu.run(dt)

@@ -1,6 +1,7 @@
 import pygame
 from settings import *
 from pygame.image import load
+from pygame.math import Vector2 as vector
 
 class Menu:
 	def __init__(self):
@@ -25,6 +26,9 @@ class Menu:
 		self.mm_rect = pygame.Rect(mm_topleft, (mm_size, mm_size))
 		self.image = load(path.join(script_directory, 'graphics', 'menus', 'main_menu_button.png')).convert_alpha()
 		self.image = pygame.transform.scale(self.image, (mm_size, mm_size))
+		self.sv_rect = pygame.Rect(vector(mm_topleft) - (mm_size + mm_margin, 0), (mm_size, mm_size))
+		self.sv_image = load(path.join(script_directory, 'graphics', 'menus', 'save_button.png')).convert_alpha()
+		self.sv_image = pygame.transform.scale(self.sv_image, (mm_size, mm_size))
 
 		# menu area
 		size = 180
@@ -74,6 +78,7 @@ class Menu:
 		self.buttons.update()
 		self.buttons.draw(self.display_surface)
 		self.display_surface.blit(self.image, self.mm_rect.topleft)
+		self.display_surface.blit(self.sv_image, self.sv_rect.topleft)
 		self.highlight_indicator(index)
 
 class Button(pygame.sprite.Sprite):
