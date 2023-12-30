@@ -245,6 +245,7 @@ class Player(Generic):
 		# collision
 		self.collision_sprites = collision_sprites
 		self.hitbox = self.rect.inflate(-50,0)
+		self.is_drowning = False
 
 		# timer 
 		self.invul_timer = Timer(500)
@@ -257,6 +258,21 @@ class Player(Generic):
 		if not self.invul_timer.active:
 			self.invul_timer.activate()
 			self.direction.y -= 1.5
+
+	def drown(self, flipper):
+		if flipper == True:
+			self.speed = 150
+			self.gravity = 2
+		elif flipper == False:
+			self.speed = 300
+			self.gravity = 4
+
+	def set_drowning(self, flipper):
+		if flipper == True:
+			self.is_drowning = True
+		else:
+			self.is_drowning = False
+
 
 	def get_status(self):
 		if self.player_dead() == True:
@@ -287,6 +303,10 @@ class Player(Generic):
 			surf = self.mask.to_surface()
 			surf.set_colorkey('black')
 			self.image = surf
+		if self.is_drowning == True and self.status != 'dead':
+			self.drown(True)
+		if self.is_drowning == False and self.status != 'dead':
+			self.drown(False)
 
 	def input(self):
 		keys = pygame.key.get_pressed()

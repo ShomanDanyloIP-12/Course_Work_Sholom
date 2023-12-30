@@ -27,6 +27,9 @@ class Level:
 		self.collision_sprites = pygame.sprite.Group()
 		self.shell_sprites = pygame.sprite.Group()
 		self.mortal_enemy_collisions = pygame.sprite.Group()
+		self.water_damage = pygame.sprite.Group()
+		self.damage_sprites_pearl = pygame.sprite.Group()
+		self.pearl_destroy = pygame.sprite.Group()
 
 		self.build_level(grid, asset_dict, audio['jump'])
 
@@ -78,12 +81,12 @@ class Level:
 		for layer_name, layer in grid.items():
 			for pos, data in layer.items():
 				if layer_name == 'terrain':
-					Generic(pos, asset_dict['land'][data], [self.all_sprites, self.collision_sprites])
+					Generic(pos, asset_dict['land'][data], [self.all_sprites, self.collision_sprites, self.pearl_destroy])
 				if layer_name == 'water':
 					if data == 'top':
-						Animated(asset_dict['water top'], pos, self.all_sprites, LEVEL_LAYERS['water'])
+						Animated(asset_dict['water top'], pos, [self.all_sprites, self.water_damage], LEVEL_LAYERS['water'])
 					else:
-						Generic(pos, asset_dict['water bottom'], self.all_sprites, LEVEL_LAYERS['water'])
+						Generic(pos, asset_dict['water bottom'], [self.all_sprites, self.water_damage], LEVEL_LAYERS['water'])
 
 				match data:
 					case 0: self.player = Player(pos, asset_dict['player'], self.all_sprites, self.collision_sprites, jump_sound, self.player_dead)
@@ -106,7 +109,7 @@ class Level:
 							pos =  pos, 
 							group =  [self.all_sprites, self.collision_sprites, self.shell_sprites],
 							pearl_surf = asset_dict['pearl'],
-							damage_sprites = self.damage_sprites
+							damage_sprites = self.damage_sprites_pearl
 							)
 					case 10:
 						Shell(
@@ -115,7 +118,7 @@ class Level:
 							pos =  pos,
 							group =  [self.all_sprites, self.collision_sprites, self.shell_sprites],
 							pearl_surf = asset_dict['pearl'],
-							damage_sprites = self.damage_sprites
+							damage_sprites = self.damage_sprites_pearl
 							)
 
 					# palm trees
@@ -166,6 +169,28 @@ class Level:
 			self.hit_sound.play()
 			self.player.damage()
 			self.change_health(20)
+
+
+	def get_damage_pearl(self):
+		collision_sprites = pygame.sprite.spritecollide(self.player, self.damage_sprites_pearl, True, pygame.sprite.collide_mask)
+		pygame.sprite.groupcollide(self.pearl_destroy, self.damage_sprites_pearl, False, True)
+		if collision_sprites and not self.player.invul_timer.active and self.player.player_dead() == False:
+			self.hit_sound.play()
+			self.player.damage()
+			self.change_health(20)
+
+
+	def get_water_damage(self):
+		collision_sprites = pygame.sprite.spritecollide(self.player, self.water_damage, False, pygame.sprite.collide_mask)
+		if collision_sprites and not self.player.invul_timer.active and self.player.player_dead() == False:
+			self.hit_sound.play()
+			self.player.set_drowning(True)
+			self.change_health(20)
+			self.player.invul_timer.activate()
+		elif collision_sprites and self.player.player_dead() == False:
+			self.player.set_drowning(True)
+		else:
+			self.player.set_drowning(False)
 
 	def menu_click(self, event):
 		if event.type == pygame.MOUSEBUTTONDOWN and self.buttons.mm_rect.collidepoint(mouse_pos()) and self.switch_locker == True:
@@ -259,10 +284,12 @@ class Level:
 			self.score_menu.display(False, self.get_diamonds, True)
 		else:
 			self.all_sprites.update(dt)
+			self.get_damage()
+			self.get_damage_pearl()
+			self.get_water_damage()
 		if self.after_pause_timer.active:
 			self.transition_out()
 		self.get_coins()
-		self.get_damage()
 		self.mortal_enemy_collision()
 		self.player_under_red_line()
 
