@@ -45,7 +45,7 @@ class Main:
 		self.main_menu_active = True
 		self.level_menu_active = False
 		self.save_menu_active = False
-		self.transition = Transition(self.toggle)
+		self.transition = Transition(self.toggle, self.create_level)
 		self.editor = Editor(self.land_tiles, self.switch)
 
 		self.music = self.no_level_sounds['music']
@@ -126,15 +126,21 @@ class Main:
 	def get_score(self):
 		return self.coins
 
+	def get_diamonds(self):
+		return self.diamonds
+
 	def death(self):
 		if self.cur_health <= 0:
 			self.player_dead = True
-			self.switch_locker = False
-			self.switch({'from': 'level', 'to': 'main_menu'})
-			self.level.bg_music.stop()
+			# self.switch_locker = False
+			# self.switch({'from': 'level', 'to': 'main_menu'})
+			# self.level.bg_music.stop()
 
 	def player_dead_get(self):
 		return self.player_dead
+
+	def change_player_dead(self):
+		self.player_dead = False
 
 	def change_toggle(self, toggle_replacement):
 		self.replacement = toggle_replacement
@@ -148,6 +154,10 @@ class Main:
 		if self.replacement['from'] == 'editor':
 			self.editor_active = False
 		elif self.replacement['from'] == 'level':
+			self.coins = 0
+			self.cur_health = 100
+			self.diamonds = 0
+			self.player_dead = False
 			self.level.bg_music.stop()
 			self.music.play(loops=-1)
 			self.level_active = False
@@ -189,36 +199,41 @@ class Main:
 			self.diamonds = 0
 			self.player_dead = False
 
+	def create_level(self, grid):
+		self.level = Level(
+			grid,
+			self.switch, {
+				'land': self.land_tiles,
+				'water bottom': self.water_bottom,
+				'water top': self.water_top_animation,
+				'gold': self.gold,
+				'silver': self.silver,
+				'diamond': self.diamond,
+				'particle': self.particle,
+				'palms': self.palms,
+				'spikes': self.spikes,
+				'tooth': self.tooth,
+				'shell': self.shell,
+				'player': self.player_graphics,
+				'pearl': self.pearl,
+				'clouds': self.clouds},
+			self.level_sounds,
+			self.change_coins,
+			self.change_health,
+			self.player_dead_get,
+			self.change_diamonds,
+			self.get_score,
+			self.get_diamonds,
+			self.change_player_dead
+		)
 
 
 	def switch(self, toggle_replacement, grid = None):
 		self.change_toggle(toggle_replacement)
 		self.transition.active = True
 		if grid:
-			self.level = Level(
-				grid,
-				self.switch, {
-					'land': self.land_tiles,
-					'water bottom': self.water_bottom,
-					'water top': self.water_top_animation,
-					'gold': self.gold,
-					'silver': self.silver,
-					'diamond': self.diamond,
-					'particle': self.particle,
-					'palms': self.palms,
-					'spikes': self.spikes,
-					'tooth': self.tooth,
-					'shell': self.shell,
-					'player': self.player_graphics,
-					'pearl': self.pearl,
-					'clouds': self.clouds},
-				self.level_sounds,
-				self.change_coins,
-				self.change_health,
-				self.player_dead_get,
-				self.change_diamonds,
-				self.get_score
-			)
+			self.transition.set_grid(grid)
+
 
 	def run(self):
 		while True:
@@ -244,10 +259,12 @@ class Main:
 
 
 class Transition:
-	def __init__(self, toggle):
+	def __init__(self, toggle, create_level):
 		self.display_surface = pygame.display.get_surface()
 		self.toggle = toggle
 		self.active = False
+		self.grid = None
+		self.create_level = create_level
 
 
 		self.border_width = 0
@@ -256,12 +273,17 @@ class Transition:
 		self.radius = vector(self.center).magnitude()
 		self.threshold = self.radius + 100
 
+	def set_grid(self, grid):
+		self.grid = grid
+
 	def display(self, dt):
 		if self.active:
 			self.border_width += 1000 * dt * self.direction
 			if self.border_width >= self.threshold:
 				self.direction = -1
 				self.border_width += -10
+				if self.grid:
+					self.create_level(self.grid)
 				self.toggle()
 
 			if self.border_width < 0:

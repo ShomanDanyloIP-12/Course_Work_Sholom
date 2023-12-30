@@ -6,16 +6,18 @@ from pygame.mouse import get_pos as mouse_pos
 from pygame.image import load
 
 from sprites import Generic, Block, Animated, Particle, Coin, Player, Spikes, Tooth, Shell, Cloud
+from timer import Timer
 
 from random import choice, randint
 
 
 class Level:
-	def __init__(self, grid, switch, asset_dict, audio, change_coins, change_health, player_dead, change_diamonds, get_score):
+	def __init__(self, grid, switch, asset_dict, audio, change_coins, change_health, player_dead, change_diamonds, get_score, get_diamonds, player_alive):
 		self.display_surface = pygame.display.get_surface()
 		self.switch = switch
 		self.switch_locker = True
 		self.player_dead = player_dead
+		self.player_alive = player_alive
 
 
 		# groups 
@@ -34,12 +36,15 @@ class Level:
 		self.change_diamonds = change_diamonds
 		self.buttons = Buttons()
 		self.get_score = get_score
+		self.get_diamonds = get_diamonds
 		self.additional_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
 		self.additional_surf.fill('green')
 		self.additional_surf.set_colorkey('green')
 		self.alpha = 0
 		self.additional_surf.set_alpha(self.alpha)
 		self.score_menu = Score_menu(self.get_score, self.additional_surf)
+		self.paused = False
+		self.after_pause_timer = Timer(500)
 
 		# level limits
 		self.level_limits = {
@@ -154,9 +159,6 @@ class Level:
 			self.player.damage()
 			self.change_health(100)
 
-	def level_complete(self):
-		if self.complete:
-			pass
 
 	def get_damage(self):
 		collision_sprites = pygame.sprite.spritecollide(self.player, self.damage_sprites, False, pygame.sprite.collide_mask)
@@ -169,18 +171,23 @@ class Level:
 		if event.type == pygame.MOUSEBUTTONDOWN and self.buttons.mm_rect.collidepoint(mouse_pos()) and self.switch_locker == True:
 			self.switch_locker = False
 			self.switch({'from':  'level', 'to': 'main_menu'})
+		if event.type == pygame.MOUSEBUTTONDOWN and self.buttons.pause_rect.collidepoint(mouse_pos()) and self.switch_locker == True and self.paused:
+			self.paused = False
+			self.after_pause_timer.activate()
+		elif event.type == pygame.MOUSEBUTTONDOWN and self.buttons.pause_rect.collidepoint(mouse_pos()) and self.switch_locker == True and self.paused == False:
+			self.paused = True
 
 
 	def score_menu_click(self, event):
 		if event.type == pygame.MOUSEBUTTONDOWN and self.score_menu.restart_rect.collidepoint(mouse_pos()) and self.switch_locker == True:
 			self.switch_locker = False
-			self.change_diamonds(0, True)
-			self.change_coins(0, True)
-			self.change_health(0, True)
 			self.switch({'from':  'level', 'to': 'level'}, self.grid)
-		if event.type == pygame.MOUSEBUTTONDOWN and self.score_menu.levels_rect.collidepoint(mouse_pos()) and self.switch_locker == True:
+		if event.type == pygame.MOUSEBUTTONDOWN and self.score_menu.levels_rect.collidepoint(mouse_pos()) and self.switch_locker == True and self.paused == False:
 			self.switch_locker = False
 			self.switch({'from':  'level', 'to': 'level_menu'})
+		if event.type == pygame.MOUSEBUTTONDOWN and self.score_menu.levels_rect.collidepoint(mouse_pos()) and self.switch_locker == True and self.paused:
+			self.paused = False
+			self.after_pause_timer.activate()
 
 
 
@@ -208,7 +215,12 @@ class Level:
 			if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE and self.switch_locker == True:
 				self.switch_locker = False
 				self.switch({'from':  'level', 'to': 'editor'})
-
+			if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
+				if self.paused:
+					self.paused = not self.paused
+					self.after_pause_timer.activate()
+				else:
+					self.paused = not self.paused
 			if event.type == self.cloud_timer:
 				surf = choice(self.cloud_surfs)
 				surf = pygame.transform.scale2x(surf) if randint(0,5) > 3 else surf
@@ -217,7 +229,7 @@ class Level:
 				Cloud((x,y), surf, self.all_sprites, self.level_limits['left'])
 
 			self.menu_click(event)
-			if self.complete:
+			if self.complete or self.player_dead() or self.paused:
 				self.score_menu_click(event)
 
 	def startup_clouds(self):
@@ -229,15 +241,26 @@ class Level:
 			Cloud((x,y), surf, self.all_sprites, self.level_limits['left'])
 
 	def transition(self):
-		max(0, min(self.alpha, 255))
+		self.alpha = max(0, min(self.alpha, 255))
 		self.alpha += 5
+		self.additional_surf.set_alpha(self.alpha)
+
+	def transition_out(self):
+		self.alpha = max(0, min(self.alpha, 255))
+		self.alpha -= 5
 		self.additional_surf.set_alpha(self.alpha)
 
 	def run(self, dt):
 		# update
 
 		self.event_loop()
-		self.all_sprites.update(dt)
+		if self.paused:
+			self.transition()
+			self.score_menu.display(False, self.get_diamonds, True)
+		else:
+			self.all_sprites.update(dt)
+		if self.after_pause_timer.active:
+			self.transition_out()
 		self.get_coins()
 		self.get_damage()
 		self.mortal_enemy_collision()
@@ -246,12 +269,18 @@ class Level:
 		# drawing
 		self.display_surface.fill(SKY_COLOR)
 		self.all_sprites.custom_draw(self.player)
-		self.buttons.display()
-		self.level_complete()
+		if self.paused:
+			self.buttons.display(True)
+		else:
+			self.buttons.display(False)
 		self.display_surface.blit(self.additional_surf, (0, 0))
+		self.after_pause_timer.update()
+		if self.player_dead():
+			self.transition()
+			self.score_menu.display(False, self.get_diamonds)
 		if self.complete:
 			self.transition()
-			self.score_menu.display()
+			self.score_menu.display(True)
 			self.player.speed = 0
 
 class CameraGroup(pygame.sprite.Group):
@@ -312,10 +341,19 @@ class Buttons:
 		self.mm_rect = pygame.Rect(mm_topleft, (mm_size, mm_size))
 		self.image = load(path.join(script_directory, 'graphics', 'menus', 'main_menu_button.png')).convert_alpha()
 		self.image = pygame.transform.scale(self.image, (mm_size, mm_size))
+		self.pause_rect = pygame.Rect(vector(mm_topleft) - (mm_size + mm_margin, 0), (mm_size, mm_size))
+		self.p_image = load(path.join(script_directory, 'graphics', 'menus', 'score_menu', 'pause_button.png')).convert_alpha()
+		self.p_image = pygame.transform.scale(self.p_image, (mm_size, mm_size))
+		self.r_image = load(path.join(script_directory, 'graphics', 'menus', 'score_menu', 'release_pause_button.png')).convert_alpha()
+		self.r_image = pygame.transform.scale(self.r_image, (mm_size, mm_size))
 
 
-	def display(self):
+	def display(self, paused = False):
 		self.display_surface.blit(self.image, self.mm_rect.topleft)
+		if paused:
+			self.display_surface.blit(self.r_image, self.pause_rect.topleft)
+		else:
+			self.display_surface.blit(self.p_image, self.pause_rect.topleft)
 
 class Score_menu:
 	def __init__(self, get_score, surf):
@@ -331,9 +369,19 @@ class Score_menu:
 		self.tittle_rect = pygame.Rect(topleft, (360, 100))
 		self.image = load(path.join(script_directory, 'graphics', 'menus', 'score_menu', 'win.png')).convert_alpha()
 		self.image = pygame.transform.scale(self.image, (360, 100))
+		self.image_go = load(path.join(script_directory, 'graphics', 'menus', 'score_menu', 'game_over.png')).convert_alpha()
+		self.image_go = pygame.transform.scale(self.image_go, (360, 100))
+		self.image_paused = load(path.join(script_directory, 'graphics', 'menus', 'score_menu', 'paused.png')).convert_alpha()
+		self.image_paused = pygame.transform.scale(self.image_paused, (360, 100))
 		self.score_rect = pygame.Rect(vector(topleft) + (0, 110), (360, 240))
 		self.score_rect_image = load(path.join(script_directory, 'graphics', 'menus', 'score_menu', 'score_back.png')).convert_alpha()
 		self.score_rect_image = pygame.transform.scale(self.score_rect_image, (360, 240))
+		self.diamonds0_image = load(path.join(script_directory, 'graphics', 'menus', 'score_menu', '0diamond_score.png')).convert_alpha()
+		self.diamonds0_image = pygame.transform.scale(self.diamonds0_image, (360, 240))
+		self.diamonds1_image = load(path.join(script_directory, 'graphics', 'menus', 'score_menu', '1diamond_score.png')).convert_alpha()
+		self.diamonds1_image = pygame.transform.scale(self.diamonds1_image, (360, 240))
+		self.diamonds2_image = load(path.join(script_directory, 'graphics', 'menus', 'score_menu', '2diamond_score.png')).convert_alpha()
+		self.diamonds2_image = pygame.transform.scale(self.diamonds2_image, (360, 240))
 		self.buttons_rect = pygame.Rect(vector(topleft) + (0, 360), (360, 120))
 		self.buttons_rect_image = load(path.join(script_directory, 'graphics', 'menus', 'score_menu', 'buttons_back.png')).convert_alpha()
 		self.buttons_rect_image = pygame.transform.scale(self.buttons_rect_image, (360, 120))
@@ -343,16 +391,33 @@ class Score_menu:
 		self.levels_rect = pygame.Rect(vector(topleft) + (190, 396), (120, 46))
 		self.levels_rect_image = load(path.join(script_directory, 'graphics', 'menus', 'score_menu', 'levels.png')).convert_alpha()
 		self.levels_rect_image = pygame.transform.scale(self.levels_rect_image, (120, 46))
+		self.resume_rect_image = load(path.join(script_directory, 'graphics', 'menus', 'score_menu', 'resume.png')).convert_alpha()
+		self.resume_rect_image = pygame.transform.scale(self.resume_rect_image, (120, 46))
 		self.font = pygame.font.Font(path.join(script_directory, 'graphics', 'ui', 'ARCADEPI.ttf'), 18)
 
 
 
-	def display(self):
+	def display(self, level_complete, get_diamonds = None, paused = False):
 		self.score_surf = self.font.render(f"Score: {self.get_score()}", False, '#33323d')
 		self.score_surf_rect = self.score_surf.get_rect(topleft=(vector(WINDOW_WIDTH / 2 - 360 / 2, 120) + (120, 255)))
-		self.display_surface.blit(self.image, self.tittle_rect.topleft)
-		self.display_surface.blit(self.score_rect_image, self.score_rect.topleft)
 		self.display_surface.blit(self.buttons_rect_image, self.buttons_rect.topleft)
+		if level_complete:
+			self.display_surface.blit(self.image, self.tittle_rect.topleft)
+			self.display_surface.blit(self.score_rect_image, self.score_rect.topleft)
+		else:
+			if paused:
+				self.display_surface.blit(self.image_paused, self.tittle_rect.topleft)
+			else:
+				self.display_surface.blit(self.image_go, self.tittle_rect.topleft)
+			if get_diamonds() == 0:
+				self.display_surface.blit(self.diamonds0_image, self.score_rect.topleft)
+			elif get_diamonds() == 1:
+				self.display_surface.blit(self.diamonds1_image, self.score_rect.topleft)
+			if get_diamonds() == 2:
+				self.display_surface.blit(self.diamonds2_image, self.score_rect.topleft)
 		self.display_surface.blit(self.restart_rect_image, self.restart_rect.topleft)
-		self.display_surface.blit(self.levels_rect_image, self.levels_rect.topleft)
+		if paused:
+			self.display_surface.blit(self.resume_rect_image, self.levels_rect.topleft)
+		else:
+			self.display_surface.blit(self.levels_rect_image, self.levels_rect.topleft)
 		self.display_surface.blit(self.score_surf, self.score_surf_rect)
