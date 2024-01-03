@@ -12,7 +12,7 @@ class Level_menu:
         self.image_background = load(path.join(script_directory, 'graphics', 'menus', 'level_menu', 'background.png')).convert_alpha()
         self.image_background = pygame.transform.scale(self.image_background, (1280, 720))
         self.switch = switch
-        self.buttons = Buttons()
+        self.buttons = Buttons_lm()
         self.switch_locker = True
 
     def event_loop(self):
@@ -56,7 +56,7 @@ class Level_menu:
             self.switch({'from': 'level_menu', 'to': 'level'}, self.read_level('level4'))
 
 
-class Buttons:
+class Buttons_lm:
     def __init__(self):
         self.display_surface = pygame.display.get_surface()
         self.create_buttons()

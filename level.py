@@ -37,7 +37,7 @@ class Level:
 		self.change_coins = change_coins
 		self.change_health = change_health
 		self.change_diamonds = change_diamonds
-		self.buttons = Buttons()
+		self.buttons = Buttons_lvl()
 		self.get_score = get_score
 		self.get_diamonds = get_diamonds
 		self.additional_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -354,7 +354,7 @@ class CameraGroup(pygame.sprite.Group):
 					offset_rect.center -= self.offset
 					self.display_surface.blit(sprite.image, offset_rect)
 
-class Buttons:
+class Buttons_lvl:
 	def __init__(self):
 		self.display_surface = pygame.display.get_surface()
 		self.create_buttons()

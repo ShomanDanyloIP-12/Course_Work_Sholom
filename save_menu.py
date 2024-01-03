@@ -15,7 +15,7 @@ class Save_menu:
         self.image_background = load(path.join(script_directory, 'graphics', 'menus', 'save_menu', 'background.png')).convert_alpha()
         self.image_background = pygame.transform.scale(self.image_background, (1280, 720))
         self.switch = switch
-        self.buttons = Buttons()
+        self.buttons = Buttons_sm()
         self.switch_locker = True
         self.from_where = ''
         self.save_file = save_file
@@ -189,7 +189,7 @@ class Save_menu:
 
 
 
-class Buttons:
+class Buttons_sm:
     def __init__(self):
         self.display_surface = pygame.display.get_surface()
         self.create_buttons()

@@ -46,10 +46,10 @@ class Menu:
 
 		# create the buttons
 		self.buttons = pygame.sprite.Group()
-		Button(self.tile_button_rect, self.buttons, self.menu_surfs['terrain'])
-		Button(self.coin_button_rect, self.buttons, self.menu_surfs['coin'])
-		Button(self.enemy_button_rect, self.buttons, self.menu_surfs['enemy'])
-		Button(self.palm_button_rect, self.buttons, self.menu_surfs['palm fg'], self.menu_surfs['palm bg'])
+		Button_edtr(self.tile_button_rect, self.buttons, self.menu_surfs['terrain'])
+		Button_edtr(self.coin_button_rect, self.buttons, self.menu_surfs['coin'])
+		Button_edtr(self.enemy_button_rect, self.buttons, self.menu_surfs['enemy'])
+		Button_edtr(self.palm_button_rect, self.buttons, self.menu_surfs['palm fg'], self.menu_surfs['palm bg'])
 
 	def click(self, mouse_pos, mouse_button):
 		for sprite in self.buttons:
@@ -81,7 +81,7 @@ class Menu:
 		self.display_surface.blit(self.sv_image, self.sv_rect.topleft)
 		self.highlight_indicator(index)
 
-class Button(pygame.sprite.Sprite):
+class Button_edtr(pygame.sprite.Sprite):
 	def __init__(self, rect, group, items, items_alt = None):
 		super().__init__(group)
 		self.image = pygame.Surface(rect.size)

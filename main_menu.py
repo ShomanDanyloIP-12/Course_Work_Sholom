@@ -12,7 +12,7 @@ class Main_menu:
         self.image_background = load(path.join(script_directory, 'graphics', 'menus', 'main_menu', 'background.png')).convert_alpha()
         self.image_background = pygame.transform.scale(self.image_background, (1280, 720))
         self.switch = switch
-        self.buttons = Buttons()
+        self.buttons = Buttons_mm()
         self.switch_locker = True
         self.image_tittle = load(path.join(script_directory, 'graphics', 'menus', 'main_menu', 'tittle.png')).convert_alpha()
         self.image_tittle = pygame.transform.scale(self.image_tittle, (540, 180))
@@ -49,7 +49,7 @@ class Main_menu:
             pygame.quit()
             sys.exit()
 
-class Buttons:
+class Buttons_mm:
     def __init__(self):
         self.display_surface = pygame.display.get_surface()
         self.create_buttons()

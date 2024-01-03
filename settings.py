@@ -32,7 +32,7 @@ EDITOR_DATA = {
 	15: {'style': 'palm_bg', 'type': 'object', 'menu': 'palm bg', 'menu_surf': path.join(graphics_directory, 'menu', 'small_bg.png'), 'preview': path.join(graphics_directory, 'preview', 'small_bg.png'), 'graphics': path.join(graphics_directory, 'terrain', 'palm', 'small_bg')},
 	16: {'style': 'palm_bg', 'type': 'object', 'menu': 'palm bg', 'menu_surf': path.join(graphics_directory, 'menu', 'large_bg.png'), 'preview': path.join(graphics_directory, 'preview', 'large_bg.png'), 'graphics': path.join(graphics_directory, 'terrain', 'palm', 'large_bg')},
 	17: {'style': 'palm_bg', 'type': 'object', 'menu': 'palm bg', 'menu_surf': path.join(graphics_directory, 'menu', 'left_bg.png'),  'preview': path.join(graphics_directory, 'preview', 'left_bg.png'),  'graphics': path.join(graphics_directory, 'terrain', 'palm', 'left_bg')},
-	18: {'style': 'palm_bg', 'type': 'object', 'menu': 'palm bg', 'menu_surf': path.join(graphics_directory, 'menu', 'right_bg.png'), 'preview': path.join(graphics_directory, 'preview', 'right_bg.png'), 'graphics': path.join(graphics_directory, 'terrain', 'palm', 'left_bg')},
+	18: {'style': 'palm_bg', 'type': 'object', 'menu': 'palm bg', 'menu_surf': path.join(graphics_directory, 'menu', 'right_bg.png'), 'preview': path.join(graphics_directory, 'preview', 'right_bg.png'), 'graphics': path.join(graphics_directory, 'terrain', 'palm', 'right_bg')},
 }
 
 NEIGHBOR_DIRECTIONS = {
